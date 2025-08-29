@@ -19,8 +19,6 @@ var (
 	throttle = time.Tick(rate)
 )
 
-var apiKey string // global var for apikey
-
 // Config struct
 type Config struct {
 	APIKey   string
@@ -58,7 +56,6 @@ type apiStatus struct {
 
 // Init setup the apiKey
 func Init(config Config) *TMDb {
-	apiKey = config.APIKey
 	internalConfig := new(tmdbConfig)
 	if config.UseProxy == true && len(config.Proxies) > 1 {
 		internalConfig.useProxy = config.UseProxy
@@ -97,18 +94,12 @@ func getTmdb(url string, payload interface{}) (interface{}, error) {
 	}
 
 	<-blocker
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		return payload, err
-	}
-	// Headers
-	headerConf := fmt.Sprintf("Bearer %s", apiKey)
-	req.Header.Set("Authorization", headerConf)
 
-	res, err := httpRequest.Do(req)
-	if err != nil {
+	res, err := httpRequest.Get(url)
+	if err != nil { // HTTP connection error
 		return payload, err
 	}
+
 	defer res.Body.Close() // Clean up
 
 	body, err := ioutil.ReadAll(res.Body)
@@ -132,16 +123,9 @@ func getTmdb(url string, payload interface{}) (interface{}, error) {
 
 func getOptionsString(options map[string]string, availableOptions map[string]struct{}) string {
 	var optionsString = ""
-	var firstOption = true
 	for key, val := range options {
 		if _, ok := availableOptions[key]; ok {
-			var newString string
-			if firstOption {
-				newString = fmt.Sprintf("%s?%s=%s", optionsString, key, val)
-				firstOption = false
-			} else {
-				newString = fmt.Sprintf("%s&%s=%s", optionsString, key, val)
-			}
+			newString := fmt.Sprintf("%s&%s=%s", optionsString, key, val)
 			optionsString = newString
 		}
 	}
