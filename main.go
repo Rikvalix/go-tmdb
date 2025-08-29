@@ -101,6 +101,7 @@ func getTmdb(url string, payload interface{}) (interface{}, error) {
 	if err != nil {
 		return payload, err
 	}
+
 	// Headers
 	headerConf := fmt.Sprintf("Bearer %s", apiKey)
 	req.Header.Set("Authorization", headerConf)
